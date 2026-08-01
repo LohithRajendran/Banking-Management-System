@@ -1,0 +1,71 @@
+# ============================================================
+# Banking Management System — Python Project Metadata
+# Used by: pytest config, build tools, linters
+# ============================================================
+
+[tool.pytest.ini_options]
+# --------------------------
+# pytest configuration
+# --------------------------
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"            # auto-detect async tests
+addopts = [
+    "-v",                        # verbose output
+    "--tb=short",                # shorter traceback format
+    "--strict-markers",          # fail on unknown markers
+    "--cov=.",                   # coverage for entire app
+    "--cov-report=term-missing", # show missed lines in terminal
+    "--cov-report=html:htmlcov", # generate HTML coverage report
+    "--cov-omit=tests/*,migrations/*,manage.py",
+]
+markers = [
+    "unit: Unit tests (no DB or HTTP)",
+    "integration: Integration tests (DB + HTTP client)",
+    "slow: Tests that take longer than 1 second",
+]
+
+# --------------------------
+# Coverage config
+# --------------------------
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "migrations/*",
+    "manage.py",
+    "alembic/*",
+    "*/__init__.py",
+    "*/conftest.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 70              # fail CI if coverage drops below 70%
+
+# --------------------------
+# Project metadata
+# --------------------------
+[project]
+name = "banking-management-system"
+version = "1.0.0"
+description = "Full-stack Banking Management System with FastAPI, Django, PostgreSQL, Redis, Celery"
+requires-python = ">=3.12"
+
+# --------------------------
+# Ruff linter config (optional, replaces flake8/isort)
+# --------------------------
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I"]       # pycodestyle + pyflakes + isort
+ignore = ["E501"]
+
+# --------------------------
+# MyPy type checker (optional)
+# --------------------------
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+strict = false

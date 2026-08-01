@@ -1,0 +1,74 @@
+# ============================================================
+# Banking Management System — Python Dependencies
+# ============================================================
+
+# --------------------------
+# FastAPI & ASGI Server
+# --------------------------
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9          # form data support
+
+# --------------------------
+# Django (Admin Panel only)
+# --------------------------
+django==5.0.6
+django-cors-headers==4.3.1
+psycopg2-binary==2.9.9           # Django PostgreSQL adapter
+
+# --------------------------
+# Database (SQLAlchemy + async PostgreSQL)
+# --------------------------
+sqlalchemy[asyncio]==2.0.30
+asyncpg==0.29.0                  # async PostgreSQL driver
+alembic==1.13.1                  # DB migrations
+
+# --------------------------
+# Pydantic (data validation)
+# --------------------------
+pydantic==2.7.1
+pydantic-settings==2.3.1         # settings from .env
+email-validator==2.1.1
+
+# --------------------------
+# Authentication & Security
+# --------------------------
+python-jose[cryptography]==3.3.0  # JWT tokens
+passlib[bcrypt]==1.7.4            # password hashing
+bcrypt==4.1.3
+
+# --------------------------
+# Redis
+# --------------------------
+redis==5.0.4
+aioredis==2.0.1                  # async Redis client
+
+# --------------------------
+# Celery (async tasks)
+# --------------------------
+celery==5.4.0
+celery[redis]==5.4.0             # Redis backend for Celery
+flower==2.0.1                    # Celery monitoring UI
+
+# --------------------------
+# Email
+# --------------------------
+aiosmtplib==3.0.1                # async SMTP for email tasks
+
+# --------------------------
+# Logging
+# --------------------------
+structlog==24.2.0                # structured logging
+python-json-logger==2.0.7
+
+# --------------------------
+# HTTP Client (for tests)
+# --------------------------
+httpx==0.27.0
+
+# --------------------------
+# Utilities
+# --------------------------
+python-dotenv==1.0.1             # load .env
+tenacity==8.3.0                  # retry logic
+pytz==2024.1                     # timezone support
