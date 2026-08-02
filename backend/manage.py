@@ -1,5 +1,16 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+"""
+manage.py — Django's Command-Line Utility
+==========================================
+You use this file to run Django commands from your terminal.
+
+COMMON COMMANDS:
+  python manage.py runserver          → Start the development server
+  python manage.py makemigrations     → Create database migration files (after changing models)
+  python manage.py migrate            → Apply migrations to the database
+  python manage.py createsuperuser    → Create an admin user for the admin panel
+  python manage.py shell              → Open a Python shell with Django loaded
+"""
 import os
 import sys
 

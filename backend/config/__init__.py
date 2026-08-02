@@ -1,3 +1,2 @@
-# config/__init__.py
-# Makes this directory a Python package.
-# Django and FastAPI can now import from `config.settings` etc.
+# This file marks 'config' as a Python package.
+# Django uses this folder for project-wide settings.

@@ -1,187 +1,244 @@
 """
-Django Settings — Banking Management System
-Used for: Django Admin panel only (/django-admin/)
-FastAPI handles the REST API; Django handles admin.
+Django Settings for the Banking App
+=====================================
+Think of this file as the "control panel" for your entire Django project.
+Everything is configured here: database, security, apps, etc.
+
+HOW TO USE:
+  - Copy .env.example to .env
+  - Fill in your database password and secret key
+  - Never commit your .env file to GitHub (it's in .gitignore)
 """
 
 import os
 from pathlib import Path
+from decouple import config
+from datetime import timedelta
 
-from dotenv import load_dotenv
-
-# Load .env variables
-load_dotenv()
-
-# ------------------------------------------------------------------
-# Base Paths
-# ------------------------------------------------------------------
+# ============================================
+# BASE DIRECTORY
+# ============================================
+# This is the root folder of your backend project (where manage.py lives)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ------------------------------------------------------------------
-# Security
-# ------------------------------------------------------------------
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-change-me-in-production")
-DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-# ------------------------------------------------------------------
-# Installed Apps
-# ------------------------------------------------------------------
+# ============================================
+# SECURITY SETTINGS
+# ============================================
+# SECRET_KEY is used to encrypt cookies and tokens.
+# NEVER share this. It's loaded from your .env file.
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production-please')
+
+# DEBUG = True means you get detailed error pages.
+# Set to False in production (live website).
+DEBUG = config('DEBUG', default=True, cast=bool)
+
+# Which domain names are allowed to access this Django app.
+# '*' means anyone (fine for local development).
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+
+
+# ============================================
+# INSTALLED APPS
+# ============================================
+# This tells Django which features and apps to enable.
 INSTALLED_APPS = [
-    # Django defaults
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
+    # --- Django Built-in Apps ---
+    'django.contrib.admin',        # Admin panel at /admin/
+    'django.contrib.auth',         # User authentication system
+    'django.contrib.contenttypes', # Used by admin internally
+    'django.contrib.sessions',     # Session management
+    'django.contrib.messages',     # Flash messages
+    'django.contrib.staticfiles',  # Static files (CSS, JS, images)
 
-    # Third-party
-    "corsheaders",
+    # --- Third-Party Apps ---
+    'rest_framework',              # Django REST Framework — adds API support
+    'rest_framework_simplejwt',    # JWT login tokens
+    'corsheaders',                 # Allows React to call Django APIs
 
-    # Our admin app
-    "django_admin",
+    # --- Our Banking App ---
+    'banking',
 ]
 
-# ------------------------------------------------------------------
-# Middleware
-# ------------------------------------------------------------------
+# Tell Django to use our custom user model (instead of the default Django user)
+AUTH_USER_MODEL = 'banking.CustomUser'
+
+
+# ============================================
+# MIDDLEWARE
+# ============================================
+# Middleware runs on every request/response (like security guards).
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',      # MUST be first — handles CORS
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ------------------------------------------------------------------
-# URL Config
-# ------------------------------------------------------------------
-ROOT_URLCONF = "config.urls"
 
-# ------------------------------------------------------------------
-# Templates
-# ------------------------------------------------------------------
+# ============================================
+# URL CONFIGURATION
+# ============================================
+ROOT_URLCONF = 'config.urls'
+
+
+# ============================================
+# TEMPLATES (for Django Admin)
+# ============================================
 TEMPLATES = [
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
             ],
         },
     },
 ]
 
-# ------------------------------------------------------------------
-# WSGI / ASGI
-# ------------------------------------------------------------------
-WSGI_APPLICATION = "config.wsgi.application"
+WSGI_APPLICATION = 'config.wsgi.application'
 
-# ------------------------------------------------------------------
-# Database — PostgreSQL
-# ------------------------------------------------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB", "banking_db"),
-        "USER": os.getenv("POSTGRES_USER", "banking_user"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "banking_pass"),
-        "HOST": os.getenv("POSTGRES_HOST", "db"),
-        "PORT": os.getenv("POSTGRES_PORT", "5432"),
-        "OPTIONS": {
-            "connect_timeout": 10,
-        },
+
+# ============================================
+# DATABASE
+# ============================================
+# By default, we use SQLite — a simple file-based database.
+# No installation needed! Great for local development.
+# 
+# To switch to PostgreSQL:
+#   1. Install PostgreSQL on your PC
+#   2. Set USE_POSTGRESQL=True in your .env file
+#   3. Fill in DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT in .env
+
+USE_POSTGRESQL = config('USE_POSTGRESQL', default=False, cast=bool)
+
+if USE_POSTGRESQL:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='banking_db'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
     }
-}
+else:
+    # SQLite — data is stored in a file called 'db.sqlite3' in your backend folder
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
-# ------------------------------------------------------------------
-# Password Validation
-# ------------------------------------------------------------------
+
+# ============================================
+# REDIS CACHE (Optional)
+# ============================================
+# Redis is an in-memory cache — it stores data in RAM for super-fast access.
+# Used for: session data, rate limiting, frequently-read data.
+#
+# If Redis is not installed, Django will use a simple in-memory cache.
+USE_REDIS = config('USE_REDIS', default=False, cast=bool)
+
+if USE_REDIS:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
+else:
+    # Simple in-memory cache (works without Redis, but data is lost when server restarts)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
+
+
+# ============================================
+# PASSWORD VALIDATION
+# ============================================
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ------------------------------------------------------------------
-# Internationalization
-# ------------------------------------------------------------------
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+
+# ============================================
+# INTERNATIONALIZATION
+# ============================================
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# ------------------------------------------------------------------
-# Static Files
-# ------------------------------------------------------------------
-STATIC_URL = "/django-static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# ------------------------------------------------------------------
-# Default Primary Key Type
-# ------------------------------------------------------------------
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# ============================================
+# STATIC FILES
+# ============================================
+STATIC_URL = 'static/'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ------------------------------------------------------------------
-# CORS (allow React frontend)
-# ------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ORIGINS", "http://localhost:3000,http://localhost"
-).split(",")
+
+# ============================================
+# CORS SETTINGS
+# ============================================
+# CORS (Cross-Origin Resource Sharing) allows your React app (running on port 5173)
+# to make API calls to your Django server (running on port 8000).
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',   # React dev server (Vite)
+    'http://localhost:3000',   # Alternative React port
+    'http://127.0.0.1:5173',
+]
 CORS_ALLOW_CREDENTIALS = True
 
-# ------------------------------------------------------------------
-# Logging (Django)
-# ------------------------------------------------------------------
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "[{asctime}] [{levelname}] [{name}] {message}",
-            "style": "{",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": BASE_DIR / "logs" / "app.log",
-            "maxBytes": 10 * 1024 * 1024,  # 10 MB
-            "backupCount": 5,
-            "formatter": "verbose",
-        },
-    },
-    "root": {
-        "handlers": ["console", "file"],
-        "level": LOG_LEVEL,
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "django_admin": {
-            "handlers": ["console", "file"],
-            "level": LOG_LEVEL,
-            "propagate": False,
-        },
-    },
+# ============================================
+# DJANGO REST FRAMEWORK SETTINGS
+# ============================================
+# DRF is like an extension to Django that makes building APIs much easier.
+REST_FRAMEWORK = {
+    # Use JWT tokens for authentication (instead of session cookies)
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # By default, only logged-in users can access APIs
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+
+# ============================================
+# JWT TOKEN SETTINGS
+# ============================================
+# JWT = JSON Web Token
+# When a user logs in, they receive an 'access token' (short-lived, 1 day)
+# and a 'refresh token' (long-lived, 7 days).
+#
+# The access token is sent with every API request to prove identity.
+# When the access token expires, the refresh token is used to get a new one.
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),      # Access token expires in 1 day
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Refresh token expires in 7 days
+    'ROTATE_REFRESH_TOKENS': True,                   # Give a new refresh token on each refresh
+    'BLACKLIST_AFTER_ROTATION': False,
+    'AUTH_HEADER_TYPES': ('Bearer',),                # Token format: "Authorization: Bearer <token>"
 }

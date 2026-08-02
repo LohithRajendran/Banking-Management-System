@@ -1,81 +1,48 @@
-# Python
+# ============================================
+# Git Ignore — Files NOT to commit to GitHub
+# ============================================
+# These files contain secrets, generated code,
+# or system-specific data that should NOT be shared.
+
+# ── Python / Django ──
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
+*.so
 .Python
-*.egg
-*.egg-info/
-dist/
-build/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-
-# Virtual environments
-.venv/
-venv/
-ENV/
 env/
+venv/
+.venv/
+ENV/
 
-# Environment variables — NEVER commit this!
-.env
-
-# Database
-*.db
-*.sqlite3
-
-# Logs
-logs/
+# Django
 *.log
-
-# Coverage reports
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-
-# Pytest cache
-.pytest_cache/
-.cache/
-
-# Node.js (Frontend)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# React build output
-frontend/dist/
-frontend/build/
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# macOS
-.DS_Store
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Docker
-*.override.yml
-
-# Static files (Django collects these)
+local_settings.py
+db.sqlite3          # Your local database (don't commit this!)
+media/
 staticfiles/
 
-# Alembic (auto-generated, don't need history)
-# (keep versions/ but ignore pycache inside)
-migrations/versions/__pycache__/
+# Environment variables (NEVER commit — contains passwords!)
+.env
+.env.local
+.env.production
+
+# ── Node.js / React ──
+node_modules/       # Installed packages (huge folder, npm install recreates it)
+dist/               # Production build output
+.vite/
+
+# ── OS / Editor files ──
+.DS_Store           # macOS
+Thumbs.db           # Windows
+*.swp               # Vim
+.idea/              # JetBrains IDEs
+.vscode/            # VS Code settings (optional — you may want to keep this)
+
+# ── Testing ──
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ── Docker ──
+docker-compose.override.yml
