@@ -7,6 +7,8 @@
 Django==4.2.7                        # The main web framework
 djangorestframework==3.14.0          # Adds REST API support to Django
 djangorestframework-simplejwt==5.3.0 # JWT login tokens (like digital ID cards)
+setuptools<81                        # Required so pkg_resources still works with simplejwt 5.3.0
+simplejwt 5.3.0
 django-cors-headers==4.3.0           # Allows React (port 5173) to talk to Django (port 8000)
 
 # --- Database ---
