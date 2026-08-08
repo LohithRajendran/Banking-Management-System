@@ -194,6 +194,9 @@ USE_TZ = True
 # STATIC FILES
 # ============================================
 STATIC_URL = 'static/'
+# STATIC_ROOT: where collectstatic gathers all static files for production.
+# Run: python manage.py collectstatic
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
@@ -202,11 +205,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ============================================
 # CORS (Cross-Origin Resource Sharing) allows your React app (running on port 5173)
 # to make API calls to your Django server (running on port 8000).
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',   # React dev server (Vite)
-    'http://localhost:3000',   # Alternative React port
-    'http://127.0.0.1:5173',
-]
+#
+# In production, set CORS_ALLOWED_ORIGINS in your .env file:
+#   CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+_cors_env = config('CORS_ALLOWED_ORIGINS', default='')
+if _cors_env:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(',') if origin.strip()]
+else:
+    # Default: allow local development ports
+    CORS_ALLOWED_ORIGINS = [
+        'http://localhost:5173',   # React dev server (Vite)
+        'http://localhost:3000',   # Alternative React port
+        'http://127.0.0.1:5173',
+    ]
 CORS_ALLOW_CREDENTIALS = True
 
 

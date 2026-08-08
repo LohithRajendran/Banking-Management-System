@@ -66,70 +66,99 @@ def invalidate_user_cache(user_id):
 def perform_transfer(sender_account, receiver_account, amount, transfer_type, description=''):
     """
     Transfer money between two bank accounts.
-    
+
     This function:
     1. Validates the amount
-    2. Checks the sender has enough balance
-    3. Deducts from sender
-    4. Adds to receiver
+    2. Locks both accounts in consistent PK order to prevent deadlocks
+    3. Re-validates balance on the locked, freshest DB records
+    4. Deducts from sender and adds to receiver
     5. Creates a transaction record
     6. Invalidates cache for both users
-    
-    Uses Django's database transactions to ensure:
+
+    Uses Django's database transactions with SELECT FOR UPDATE to ensure:
     - Either ALL steps succeed
-    - Or NONE of them happen (to prevent partial transfers)
-    
+    - Or NONE of them happen (prevents partial transfers)
+    - Concurrent transfers cannot bypass the balance check (race condition fix)
+
     Returns: (Transaction object, error_message or None)
     """
     from django.db import transaction as db_transaction
-    from .models import Transaction
+    from .models import BankAccount, Transaction
 
-    # --- Validation ---
+    # --- Pre-transaction validation ---
     if amount <= 0:
         return None, "Transfer amount must be greater than 0."
 
-    if not sender_account.is_active:
-        return None, "Your account is not active."
-
-    if not receiver_account.is_active:
-        return None, "Recipient's account is not active."
-
-    if sender_account.balance < amount:
-        return None, f"Insufficient balance. Your balance is ₹{sender_account.balance}."
-
-    if sender_account == receiver_account:
+    if sender_account.pk == receiver_account.pk:
         return None, "You cannot transfer money to yourself."
 
-    # --- Perform the transfer atomically ---
-    # 'atomic()' means: run all database operations as one unit.
-    # If any step fails (e.g., database error), all changes are rolled back.
+    # --- Perform the transfer atomically with row-level locking ---
+    # SELECT FOR UPDATE locks the rows so no other transaction can modify them
+    # until this transaction completes. This prevents race conditions where two
+    # concurrent transfers could both pass the balance check on stale data.
+    #
+    # We lock in ascending PK order to prevent deadlocks when two transactions
+    # try to lock the same pair of accounts in opposite order at the same time.
     try:
         with db_transaction.atomic():
+            # Lock both accounts in a consistent order (by primary key).
+            # This is critical: if T1 locks A then B, and T2 locks B then A
+            # simultaneously, they will deadlock. Always locking in PK order
+            # prevents this.
+            lock_ids = sorted([sender_account.pk, receiver_account.pk])
+            locked_accounts = (
+                BankAccount.objects
+                .select_for_update()
+                .filter(pk__in=lock_ids)
+                .in_bulk()  # returns {pk: instance}
+            )
+
+            # Refresh our local references from the freshly locked DB rows
+            locked_sender   = locked_accounts[sender_account.pk]
+            locked_receiver = locked_accounts[receiver_account.pk]
+
+            # Re-validate with fresh, locked data
+            if not locked_sender.is_active:
+                return None, "Your account is not active."
+
+            if not locked_receiver.is_active:
+                return None, "Recipient's account is not active."
+
+            if locked_sender.balance < amount:
+                return None, (
+                    f"Insufficient balance. Your balance is ₹{locked_sender.balance}."
+                )
+
             # Step 1: Deduct from sender
-            sender_account.balance -= amount
-            sender_account.save()
+            locked_sender.balance -= amount
+            locked_sender.save(update_fields=['balance'])
 
             # Step 2: Add to receiver
-            receiver_account.balance += amount
-            receiver_account.save()
+            locked_receiver.balance += amount
+            locked_receiver.save(update_fields=['balance'])
 
             # Step 3: Create transaction record
             txn = Transaction.objects.create(
-                sender=sender_account,
-                receiver=receiver_account,
+                sender=locked_sender,
+                receiver=locked_receiver,
                 amount=amount,
                 transfer_type=transfer_type,
                 status='completed',
                 description=description,
             )
 
-            # Step 4: Clear cached dashboard data for both users
-            invalidate_user_cache(sender_account.user.id)
-            invalidate_user_cache(receiver_account.user.id)
+            # Step 4: Propagate new balance back to the caller's references
+            # so views can return the updated balance without a second DB query.
+            sender_account.balance   = locked_sender.balance
+            receiver_account.balance = locked_receiver.balance
+
+            # Step 5: Clear cached dashboard data for both users
+            invalidate_user_cache(locked_sender.user.id)
+            invalidate_user_cache(locked_receiver.user.id)
 
             logger.info(
-                f"Transfer successful: {sender_account.account_number} → "
-                f"{receiver_account.account_number} | ₹{amount} | {txn.reference_number}"
+                f"Transfer successful: {locked_sender.account_number} → "
+                f"{locked_receiver.account_number} | ₹{amount} | {txn.reference_number}"
             )
 
             return txn, None  # Success!

@@ -11,6 +11,7 @@ Each serializer is like a form that says "what fields are we reading/writing".
 """
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import CustomUser, BankAccount, Transaction
 
 
@@ -44,12 +45,18 @@ class UserSignupSerializer(serializers.ModelSerializer):
         return value.lower()
 
     def validate(self, data):
-        """Check that passwords match."""
+        """Check that passwords match and meet Django's password strength rules."""
         if data['password'] != data['confirm_password']:
             raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
 
-        # Use Django's built-in password strength validation
-        validate_password(data['password'])
+        # Use Django's built-in password strength validation.
+        # Django raises its own ValidationError — we must convert it to a DRF
+        # ValidationError so it returns a proper 400 response instead of a 500 crash.
+        try:
+            validate_password(data['password'])
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
+
         return data
 
     def create(self, validated_data):
