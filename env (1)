@@ -1,0 +1,47 @@
+# ==========================================================
+# .env — SecureBank (combined backend + frontend, production)
+# NEVER commit this file to git (should already be in .gitignore)
+# ==========================================================
+# NOTE: Django and Vite each look for their OWN .env file in their OWN
+# folder — there's no single root .env that both frameworks read
+# automatically. Keep this as your master copy, but you'll still need
+# a copy of it (or just the relevant half) saved as:
+#   backend/.env
+#   frontend/.env
+# ==========================================================
+
+# ---------------- BACKEND (Django + DRF) ----------------
+
+# Must be a long, random, secret string. Do not reuse the example below in a
+# real deployment — generate your own with:
+#   python -c "import secrets; print(secrets.token_urlsafe(50))"
+SECRET_KEY=sTPGXLv4Z76FPyECzUwYuQv2yGEusBIq17BrmYrQiied0VpB6VphpX9nKP735Xo8iuM
+
+# Must be False in production — True leaks stack traces/debug info publicly
+DEBUG=False
+
+# Comma-separated list, no spaces, no scheme (no https://), no trailing slash
+ALLOWED_HOSTS=api.yourdomain.com,your-app.onrender.com
+
+# Must match your deployed frontend URL exactly, incl. https://
+CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://your-frontend.vercel.app
+
+# Database — set USE_POSTGRESQL=True for production (SQLite fallback is not
+# safe for real concurrent production traffic / ephemeral hosts)
+USE_POSTGRESQL=True
+DB_NAME=banking_db
+DB_USER=postgres
+DB_PASSWORD=change-this-to-a-strong-db-password
+DB_HOST=your-db-host.example.com
+DB_PORT=5432
+
+# Redis cache (optional but recommended in production)
+USE_REDIS=True
+REDIS_URL=redis://default:your-redis-password@your-redis-host:6379/1
+
+
+# ---------------- FRONTEND (React + Vite) ----------------
+# Vite only exposes VITE_-prefixed vars, and bakes them in at build time
+# (npm run build) — this must be set BEFORE building, not after deploying.
+
+VITE_API_URL=https://api.yourdomain.com/api
