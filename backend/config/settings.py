@@ -222,16 +222,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #
 # In production, set CORS_ALLOWED_ORIGINS in your .env file:
 #   CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+# Enable CORS for production & Vercel deployments
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
+
 _cors_env = config('CORS_ALLOWED_ORIGINS', default='')
 if _cors_env:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(',') if origin.strip()]
 else:
-    # Default: allow local development ports
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:5173',   # React dev server (Vite)
-        'http://localhost:3000',   # Alternative React port
+        'http://localhost:3000',
         'http://127.0.0.1:5173',
     ]
+
+# Automatically allow all Vercel deployment subdomains (*.vercel.app)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 
