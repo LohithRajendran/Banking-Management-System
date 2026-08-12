@@ -14,6 +14,11 @@ import os
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
+
 
 # ============================================
 # BASE DIRECTORY
@@ -71,6 +76,7 @@ AUTH_USER_MODEL = 'banking.CustomUser'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',      # MUST be first — handles CORS
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Serves static files efficiently in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -119,9 +125,18 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #   2. Set USE_POSTGRESQL=True in your .env file
 #   3. Fill in DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT in .env
 
+DATABASE_URL = config('DATABASE_URL', default='')
 USE_POSTGRESQL = config('USE_POSTGRESQL', default=False, cast=bool)
 
-if USE_POSTGRESQL:
+if DATABASE_URL and dj_database_url:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+elif USE_POSTGRESQL:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -194,9 +209,8 @@ USE_TZ = True
 # STATIC FILES
 # ============================================
 STATIC_URL = 'static/'
-# STATIC_ROOT: where collectstatic gathers all static files for production.
-# Run: python manage.py collectstatic
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
@@ -219,6 +233,15 @@ else:
         'http://127.0.0.1:5173',
     ]
 CORS_ALLOW_CREDENTIALS = True
+
+
+# ============================================
+# GOOGLE SIGN-IN
+# ============================================
+# The OAuth 2.0 Client ID from Google Cloud Console (APIs & Services > Credentials).
+# This MUST match the client ID used on the frontend (VITE_GOOGLE_CLIENT_ID) — the
+# backend uses it to verify that a Google ID token was really issued for this app.
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID', default='')
 
 
 # ============================================

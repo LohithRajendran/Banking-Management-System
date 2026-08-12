@@ -6,11 +6,13 @@
 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { GoogleLogin } from '@react-oauth/google'
+import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { User, Mail, Lock, Eye, EyeOff, Shield, ArrowRight, CheckCircle } from 'lucide-react'
 
 function Signup() {
-  const { signup } = useAuth()
+  const { signup, googleLogin } = useAuth()
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -244,6 +246,23 @@ function Signup() {
             )}
           </button>
         </form>
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
+          <hr className="auth-divider" style={{ flex: 1, margin: 0 }} />
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>OR</span>
+          <hr className="auth-divider" style={{ flex: 1, margin: 0 }} />
+        </div>
+
+        {/* Google Sign-Up */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <GoogleLogin
+            onSuccess={(credentialResponse) => googleLogin(credentialResponse.credential)}
+            onError={() => toast.error('Google sign-up failed. Please try again.')}
+            text="signup_with"
+            width="320"
+          />
+        </div>
 
         <p className="auth-footer" style={{ marginTop: 24 }}>
           Already have an account? <Link to="/login">Sign in</Link>

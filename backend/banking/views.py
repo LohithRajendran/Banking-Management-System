@@ -26,6 +26,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.conf import settings
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
+
 from .models import CustomUser, BankAccount, Transaction
 from .serializers import (
     UserSignupSerializer,
@@ -512,3 +516,89 @@ def lookup_by_account(request, account_number):
         )
     except BankAccount.DoesNotExist:
         return error_response(f"No account found with number '{account_number}'.", status_code=status.HTTP_404_NOT_FOUND)
+
+
+# ============================================
+# ENDPOINT: GOOGLE SIGN-IN / SIGN-UP
+# POST /api/auth/google/
+# ============================================
+@api_view(['POST'])
+@permission_classes([AllowAny])  # Anyone can use Google sign-in (no auth token needed yet)
+def google_login(request):
+    """
+    Log in (or automatically sign up) using a Google account.
+
+    The frontend uses Google Identity Services to get an ID token, then
+    sends it here. We verify that token directly with Google's servers —
+    that proves the request really came from that Google account, without
+    us ever seeing the user's Google password.
+
+    Request body:
+    {
+        "credential": "eyJhbGciOi..."   <- the Google ID token (JWT)
+    }
+
+    Response shape matches the regular /api/login/ endpoint so the
+    frontend can reuse the exact same success handling.
+    """
+    credential = request.data.get('credential')
+
+    if not credential:
+        return error_response("Missing Google credential.")
+
+    if not settings.GOOGLE_CLIENT_ID:
+        # Fails loudly in dev so it's obvious the .env var is missing,
+        # instead of silently rejecting every Google login attempt.
+        return error_response(
+            "Google Sign-In is not configured on the server (GOOGLE_CLIENT_ID missing).",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    # Verify the token with Google. This checks the signature, expiry,
+    # and that the token was issued for OUR client ID (not some other app).
+    try:
+        payload = google_id_token.verify_oauth2_token(
+            credential,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except ValueError:
+        return error_response("Invalid or expired Google credential.", status_code=status.HTTP_401_UNAUTHORIZED)
+
+    if not payload.get('email_verified', False):
+        return error_response("Your Google email is not verified.", status_code=status.HTTP_401_UNAUTHORIZED)
+
+    email = payload['email'].lower().strip()
+    first_name = payload.get('given_name', '') or 'Google'
+    last_name = payload.get('family_name', '') or 'User'
+
+    # Find an existing user, or create a new one on the fly.
+    user = CustomUser.objects.filter(email=email).first()
+    created = False
+
+    if user is None:
+        user = CustomUser.objects.create_user(
+            username=email,          # Same convention as the regular signup flow
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            password=None,           # No password — this account can only log in via Google
+        )
+        created = True
+    elif not user.is_active:
+        return error_response("Your account has been deactivated. Contact support.", status_code=status.HTTP_403_FORBIDDEN)
+
+    # Generate JWT tokens — from here on it behaves exactly like a normal login
+    refresh = RefreshToken.for_user(user)
+    has_bank_account = hasattr(user, 'bank_account')
+
+    return success_response(
+        data={
+            'user': UserProfileSerializer(user).data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'has_bank_account': has_bank_account,
+        },
+        message=f"Welcome{'' if not created else ' to SecureBank'}, {user.first_name}!",
+        status_code=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+    )

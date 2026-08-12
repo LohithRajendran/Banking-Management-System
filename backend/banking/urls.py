@@ -28,6 +28,9 @@ urlpatterns = [
     # POST /api/login/ — Login, receive JWT tokens
     path('login/', views.login, name='login'),
 
+    # POST /api/auth/google/ — Login or signup with a Google account
+    path('auth/google/', views.google_login, name='google_login'),
+
     # POST /api/token/refresh/ — Get a new access token using refresh token
     # (Built into Django REST Framework Simple JWT)
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

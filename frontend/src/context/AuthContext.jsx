@@ -114,6 +114,39 @@ export function AuthProvider({ children }) {
 
 
   // ============================================
+  // GOOGLE LOGIN / SIGNUP FUNCTION
+  // ============================================
+  // Called with the Google ID token (credential) after the user picks
+  // an account in the Google popup. The backend verifies it, then either
+  // logs the matching user in or creates a brand-new account for them.
+  const googleLogin = async (credential) => {
+    try {
+      const response = await api.post('/auth/google/', { credential })
+      const { user: userData, access, refresh, has_bank_account } = response.data.data
+
+      localStorage.setItem('access_token', access)
+      localStorage.setItem('refresh_token', refresh)
+      localStorage.setItem('user', JSON.stringify(userData))
+
+      setUser(userData)
+      toast.success(response.data.message)
+
+      if (has_bank_account) {
+        navigate('/dashboard')
+      } else {
+        navigate('/create-account')
+      }
+
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Google sign-in failed. Please try again.'
+      toast.error(message)
+      return { success: false }
+    }
+  }
+
+
+  // ============================================
   // LOGOUT FUNCTION
   // ============================================
   const logout = () => {
@@ -145,6 +178,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     signup,
+    googleLogin,
     updateUser,
   }
 
