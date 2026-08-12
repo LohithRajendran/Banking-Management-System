@@ -10,7 +10,7 @@ setuptools<81
 django-cors-headers==4.3.0
 google-auth==2.35.0
 # --- Database ---
-psycopg2-binary==2.9.9
+psycopg2==2.9.9
 # --- Cache (Redis) ---
 redis==5.0.1
 django-redis==5.4.0
