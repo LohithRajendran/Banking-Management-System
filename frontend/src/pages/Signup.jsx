@@ -247,22 +247,25 @@ function Signup() {
           </button>
         </form>
 
-        {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
-          <hr className="auth-divider" style={{ flex: 1, margin: 0 }} />
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>OR</span>
-          <hr className="auth-divider" style={{ flex: 1, margin: 0 }} />
-        </div>
-
         {/* Google Sign-Up */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <GoogleLogin
-            onSuccess={(credentialResponse) => googleLogin(credentialResponse.credential)}
-            onError={() => toast.error('Google sign-up failed. Please try again.')}
-            text="signup_with"
-            width="320"
-          />
-        </div>
+        {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
+              <hr className="auth-divider" style={{ flex: 1, margin: 0 }} />
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>OR</span>
+              <hr className="auth-divider" style={{ flex: 1, margin: 0 }} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <GoogleLogin
+                onSuccess={(credentialResponse) => googleLogin(credentialResponse.credential)}
+                onError={() => toast.error('Google sign-up failed. Please try again.')}
+                text="signup_with"
+                width="320"
+              />
+            </div>
+          </>
+        )}
 
         <p className="auth-footer" style={{ marginTop: 24 }}>
           Already have an account? <Link to="/login">Sign in</Link>
