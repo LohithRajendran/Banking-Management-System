@@ -1,0 +1,89 @@
+# ==============================================================================
+# 🏦 SecureBank — Git Ignore Configuration
+# ==============================================================================
+
+# ── 🔐 Secrets & Local Environments ───────────────────────────────────────────
+.env
+.env.*
+!.env.example
+local_settings.py
+
+# ── 🐍 Python / Django ─────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Django Database & Static Build
+*.log
+db.sqlite3
+db.sqlite3-journal
+db.sqlite3-shm
+db.sqlite3-wal
+media/
+staticfiles/
+
+# ── ⚛️ Node.js / React / Vite ──────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.vite/
+dist/
+dist-ssr/
+*.local
+
+# ── 🧪 Testing & Coverage ─────────────────────────────────────────────────────
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+
+# ── 💻 IDEs & Operating System ────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# ── 🐳 Docker & Deployment ────────────────────────────────────────────────────
+docker-compose.override.yml
+.buildpack-diagnostics
+
