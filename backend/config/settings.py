@@ -227,7 +227,7 @@ CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=boo
 
 _cors_env = config('CORS_ALLOWED_ORIGINS', default='')
 if _cors_env:
-    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(',') if origin.strip()]
+    CORS_ALLOWED_ORIGINS = [origin.strip().rstrip('/') for origin in _cors_env.split(',') if origin.strip()]
 else:
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:5173',   # React dev server (Vite)
