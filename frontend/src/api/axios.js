@@ -12,7 +12,11 @@ import axios from 'axios'
 // Base URL for all API calls
 // In production: set VITE_API_URL in a .env file (e.g. VITE_API_URL=https://api.yourdomain.com/api)
 // In development: Vite's proxy handles /api → localhost:8000, so we use a relative '/api'
-const BASE_URL = import.meta.env.VITE_API_URL || '/api'
+let rawUrl = import.meta.env.VITE_API_URL || '/api'
+if (rawUrl.startsWith('http') && !rawUrl.replace(/\/$/, '').endsWith('/api')) {
+  rawUrl = rawUrl.replace(/\/$/, '') + '/api'
+}
+const BASE_URL = rawUrl
 
 // Create the axios instance
 const api = axios.create({
